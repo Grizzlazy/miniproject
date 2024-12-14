@@ -27,7 +27,7 @@ jobs:
       - name: Run main.py 
         run: python ACO.py
         env:
-            data_set: ${{ matrix.data_set }}
+            dataset: ${{ matrix.data_set }}
       - name: Upload result Excel file as artifact
         uses: actions/upload-artifact@v4
         with:
