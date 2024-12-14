@@ -1,1 +1,56 @@
+name: Workflow name
 
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run test with multiple configurations
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        data_set: ["1.txt", "2.txt", "3.txt", "4.txt", "5.txt", "6.txt", "7.txt", "8.txt", "9.txt", "10.txt"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+        
+      - name: Run main.py 
+        run: python ACO.py
+        env:
+            data_set: ${{ matrix.data_set }}
+      - name: Upload result Excel file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: excel-results-${{ matrix.data_set }}
+          path: "*.csv"
+
+  summary:
+    name: Summary results
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          merge-multiple: true
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-summary
+          path: "*.csv"

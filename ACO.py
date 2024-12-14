@@ -1,6 +1,8 @@
 import numpy as np
 import random
 import os
+import csv
+import time
 from input import read_input_from_file, read_input_from_console
 
 filename = str(os.getenv('dataset', default = "10.txt"))
@@ -130,6 +132,7 @@ def main():
     file = "data/"+filename
     N, M, Q, distances, q_required = read_input_from_file(file)
     
+    start_time = time.time()
     best_path, best_distance = solve_aco(
         distances=distances,
         Q=Q,
@@ -140,12 +143,29 @@ def main():
         alpha=1,
         beta=2
     )
+    end_time = time.time()
+    execution_time = end_time - start_time
     
-    print(best_distance)
-    # In kết quả
+    # Lưu kết quả vào file CSV
+    result_file = filename+".csv"
+    file_exists = os.path.isfile(result_file)
+    
+    with open(result_file, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        # Ghi header nếu file chưa tồn tại
+        if not file_exists:
+            writer.writerow(['Dataset', 'Distance', 'Path Length', 'Path', 'Execution Time (s)'])
+        
+        # Ghi kết quả
+        path_str = ' '.join(map(str, best_path)) if best_path else "No path found"
+        path_length = len(best_path) if best_path else 0
+        writer.writerow([filename, best_distance, path_length, path_str, execution_time])
+
+    # In kết quả ra console
+    print(f"Distance: {best_distance}")
     if best_path:
-        print(len(best_path))
-        print(' '.join(map(str, best_path)))
+        print(f"Path length: {len(best_path)}")
+        print(f"Path: {' '.join(map(str, best_path))}")
     else:
         print("Không tìm thấy đường đi thỏa mãn")
 
