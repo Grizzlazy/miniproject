@@ -76,11 +76,11 @@ def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
     
     # Điều chỉnh số kiến theo kích thước bài toán
     if n_shelves <= 100:
-        n_ants = 10
-    elif n_shelves <= 500:
         n_ants = 20
-    else:
+    elif n_shelves <= 500:
         n_ants = 30
+    else:
+        n_ants = 40
         
     pheromone = np.ones((n_shelves + 1, n_shelves + 1), dtype=np.float32)
     
@@ -145,7 +145,7 @@ def main():
     end_time = time.time()
     execution_time = end_time - start_time
     
-    result_file = "result/"+filename+".csv"
+    result_file = filename+".csv"
     os.makedirs(os.path.dirname(result_file), exist_ok=True)
     
     file_exists = os.path.isfile(result_file)
