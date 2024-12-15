@@ -88,7 +88,7 @@ def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
     best_distance = float('inf')
     no_improvement_count = 0
     
-    while no_improvement_count < 10:
+    while no_improvement_count < 100:
         iteration_best_distance = float('inf')
         iteration_best_path = None
         
@@ -146,10 +146,14 @@ def main():
     execution_time = end_time - start_time
     
     result_file = filename+".csv"
+    os.makedirs(os.path.dirname(result_file), exist_ok=True)
+    
+    file_exists = os.path.isfile(result_file)
     
     with open(result_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Dataset', 'Distance', 'Path Length', 'Path', 'Execution Time (s)'])
+        if not file_exists:
+            writer.writerow(['Dataset', 'Distance', 'Path Length', 'Path', 'Execution Time (s)'])
         
         path_str = ' '.join(map(str, best_path)) if best_path else "No path found"
         path_length = len(best_path) if best_path else 0
