@@ -2,50 +2,66 @@ import pandas as pd
 import os
 
 def generate_summary():
-    # Đọc file CSV
-    df = pd.read_csv('results.csv')
+    # Đọc file CSV từ thư mục result
+    file_path = "result/"
+    dfs = []
+    for file in os.listdir(file_path):
+        if file.endswith('.csv'):
+            df = pd.read_csv(file_path + file)
+            dfs.append(df)
     
-    # Tạo summary
-    summary = {
-        'Total Datasets': len(df),
-        'Average Distance': df['Distance'].mean(),
-        'Min Distance': df['Distance'].min(),
-        'Max Distance': df['Distance'].max(),
-        'Average Path Length': df['Path Length'].mean(),
-        'Average Execution Time': df['Execution Time (s)'].mean(),
-        'Min Execution Time': df['Execution Time (s)'].min(),
-        'Max Execution Time': df['Execution Time (s)'].max()
-    }
-    
-    # Tạo summary theo từng dataset
-    dataset_summary = df.groupby('Dataset').agg({
-        'Distance': ['mean', 'min', 'max'],
-        'Path Length': 'mean',
-        'Execution Time (s)': ['mean', 'min', 'max']
-    }).round(3)
-    
-    # Lưu kết quả vào file
-    with open('summary_report.txt', 'w') as f:
-        f.write("=== OVERALL SUMMARY ===\n\n")
-        for key, value in summary.items():
-            f.write(f"{key}: {value:.3f}\n")
-            
-        f.write("\n\n=== DATASET SUMMARY ===\n\n")
-        f.write(dataset_summary.to_string())
+    # Gộp tất cả dataframes
+    if dfs:
+        df = pd.concat(dfs, ignore_index=True)
         
-        f.write("\n\n=== BEST SOLUTIONS ===\n\n")
-        best_solutions = df.loc[df.groupby('Dataset')['Distance'].idxmin()]
-        for _, row in best_solutions.iterrows():
-            f.write(f"Dataset: {row['Dataset']}\n")
-            f.write(f"Distance: {row['Distance']:.3f}\n")
-            f.write(f"Path Length: {row['Path Length']}\n")
-            f.write(f"Path: {row['Path']}\n")
-            f.write(f"Execution Time: {row['Execution Time (s)']:.3f}s\n")
-            f.write("-" * 50 + "\n")
+        # Add obj_compare values
+        obj_compare = {
+            '1.txt': 0,
+            '2.txt': 2046,
+            '3.txt': 0,
+            '4.txt': 1878,
+            '5.txt': 1664,
+            '6.txt': 1170,  
+            '7.txt': 66,   
+            '8.txt': 0, 
+            '9.txt': 2520, 
+            '10.txt': 44   
+        }
+        
+        # Add obj_compare column to df
+        df['Obj_Compare'] = df['Dataset'].map(obj_compare)
+        
+        # Calculate Gap percentage
+        df['Gap (%)'] = ((df['Distance'] - df['Obj_Compare']) / df['Obj_Compare'] * 100).round(2)
+
+        # Tạo best solutions summary
+        best_solutions = df.loc[df.groupby('Dataset')['Distance'].idxmin()][
+            ['Dataset', 'Path Length', 'Distance', 'Execution Time (s)', 'Path', 'Obj_Compare', 'Gap (%)']
+        ].rename(columns={
+            'Distance': 'Solution',
+            'Execution Time (s)': 'Time',
+            'Obj_Compare': 'Obj_Cmp'
+        })
+
+        # Sắp xếp lại các cột theo thứ tự yêu cầu
+        best_solutions = best_solutions[['Dataset', 'Path Length', 'Solution', 'Time', 'Path', 'Obj_Cmp', 'Gap (%)']]
+        
+        # Sắp xếp theo tên dataset
+        best_solutions = best_solutions.sort_values('Dataset')
+        
+        # Ghi vào Excel
+        with pd.ExcelWriter('summary_report.xlsx') as writer:
+            best_solutions.to_excel(writer, sheet_name='Best Solutions', index=False)
+            
+            # Format Best Solutions sheet
+            worksheet = writer.sheets['Best Solutions']
+            worksheet.column_dimensions['A'].width = 15  # Dataset
+            worksheet.column_dimensions['B'].width = 12  # Path Length
+            worksheet.column_dimensions['C'].width = 12  # Solution
+            worksheet.column_dimensions['D'].width = 12  # Time
+            worksheet.column_dimensions['E'].width = 50  # Path
+            worksheet.column_dimensions['F'].width = 12  # Obj_Cmp
+            worksheet.column_dimensions['G'].width = 12  # Gap
 
 if __name__ == "__main__":
-    if not os.path.exists('results.csv'):
-        print("Error: results.csv not found!")
-    else:
-        generate_summary()
-        print("Summary generated in summary_report.txt")
+    generate_summary()

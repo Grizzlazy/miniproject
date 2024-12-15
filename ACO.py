@@ -163,11 +163,8 @@ def main():
 
     # In kết quả ra console
     print(f"Distance: {best_distance}")
-    if best_path:
-        print(f"Path length: {len(best_path)}")
-        print(f"Path: {' '.join(map(str, best_path))}")
-    else:
-        print("Không tìm thấy đường đi thỏa mãn")
+    print(f"Path length: {len(best_path)}")
+    print(f"Path: {' '.join(map(str, best_path))}")
 
 if __name__ == "__main__":
     main()
