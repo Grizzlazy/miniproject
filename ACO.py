@@ -77,18 +77,20 @@ def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
     # Điều chỉnh số kiến theo kích thước bài toán
     if n_shelves <= 100:
         n_ants = 20
+        n_iterations = 100
     elif n_shelves <= 500:
         n_ants = 30
+        n_iterations = 150
     else:
         n_ants = 40
+        n_iterations = 200
         
     pheromone = np.ones((n_shelves + 1, n_shelves + 1), dtype=np.float32)
     
     best_path = None
     best_distance = float('inf')
-    no_improvement_count = 0
     
-    while no_improvement_count < 100:
+    for iteration in range(n_iterations):
         iteration_best_distance = float('inf')
         iteration_best_path = None
         
@@ -122,13 +124,9 @@ def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
                 if total_distance < best_distance:
                     best_distance = total_distance
                     best_path = path.copy()
-                    no_improvement_count = 0
         
         if iteration_best_path:
             update_pheromone(pheromone, iteration_best_path, iteration_best_distance, decay_rate)
-            
-        if iteration_best_distance >= best_distance:
-            no_improvement_count += 1
         
     return best_path, best_distance
 
