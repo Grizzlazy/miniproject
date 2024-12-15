@@ -2,29 +2,39 @@
 import numpy as np
 import random
 import os
-from array import array
+import csv
+import time
 
 
 def is_collection_complete(collected, required):
-    return np.all(collected >= required)
+    return all(collected[i] >= required[i] for i in range(len(required)))
 
-def select_next_shelf(current, visited, pheromone, distances, Q, collected, required, alpha, beta, needed_products):
-    candidates = needed_products - visited
-    if not candidates:
-        return None
-        
+def select_next_shelf(current, visited, pheromone, distances, Q, collected, required, alpha, beta):
+    n_shelves = len(distances) - 1
     probabilities = []
-    for next_shelf in candidates:
-        pheromone_value = pheromone[current][next_shelf]
-        distance = distances[current][next_shelf]
-        visibility = 1.0 / distance if distance > 0 else 1.0
-        
-        probability = (pheromone_value ** alpha) * (visibility ** beta)
-        probabilities.append((next_shelf, probability))
+    
+    for next_shelf in range(1, n_shelves + 1):
+        if next_shelf not in visited:
+            # Kiểm tra xem kệ này có sản phẩm cần thiết không
+            has_needed_products = False
+            for i in range(len(required)):
+                if collected[i] < required[i] and Q[i][next_shelf-1] > 0:
+                    has_needed_products = True
+                    break
+            
+            if has_needed_products:
+                # Tính xác suất chọn kệ này
+                pheromone_value = pheromone[current][next_shelf]
+                distance = distances[current][next_shelf]
+                visibility = 1.0 / distance if distance > 0 else 1.0
+                
+                probability = (pheromone_value ** alpha) * (visibility ** beta)
+                probabilities.append((next_shelf, probability))
     
     if not probabilities:
         return None
         
+    # Chọn kệ tiếp theo dựa trên xác suất
     total = sum(prob for _, prob in probabilities)
     if total == 0:
         return None
@@ -39,64 +49,53 @@ def select_next_shelf(current, visited, pheromone, distances, Q, collected, requ
     return probabilities[-1][0]
 
 def calculate_total_distance(path, distances):
-    total = distances[0][path[0]]
-    total += np.sum([distances[path[i]][path[i+1]] for i in range(len(path)-1)])
+    total = distances[0][path[0]]  # Từ cửa đến kệ đầu tiên
+    
+    # Giữa các kệ
+    for i in range(len(path) - 1):
+        total += distances[path[i]][path[i+1]]
+        
+    # Từ kệ cuối về cửa
     total += distances[path[-1]][0]
     return total
 
-def update_pheromone(pheromone, path, distance, decay_rate):
+def update_pheromone(pheromone, path, distance):
     pheromone_delta = 1.0 / distance if distance > 0 else 0
     
-    current = 0
+    # Cập nhật pheromone cho toàn bộ đường đi
+    current = 0  # Bắt đầu từ cửa
     for next_pos in path:
-        pheromone[current][next_pos] = (1 - decay_rate) * pheromone[current][next_pos] + pheromone_delta
-        pheromone[next_pos][current] = pheromone[current][next_pos]
+        pheromone[current][next_pos] += pheromone_delta
+        pheromone[next_pos][current] += pheromone_delta
         current = next_pos
-    pheromone[current][0] = (1 - decay_rate) * pheromone[current][0] + pheromone_delta
-    pheromone[0][current] = pheromone[current][0]
+    # Cập nhật đường về cửa
+    pheromone[current][0] += pheromone_delta
+    pheromone[0][current] += pheromone_delta
 
-def find_needed_shelves(Q, q_required):
-    needed_shelves = set()
-    for i in range(len(q_required)):
-        if q_required[i] > 0:
-            for j in range(len(Q[i])):
-                if Q[i][j] > 0:
-                    needed_shelves.add(j + 1)
-    return needed_shelves
-
-def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
+def solve_aco(distances, Q, q_required, n_ants=20, n_iterations=100, 
+              decay_rate=0.1, alpha=1, beta=2):
     n_shelves = len(distances) - 1
     n_products = len(Q)
     
-    if n_shelves <= 100:
-        n_ants = 20
-    elif n_shelves <= 500:
-        n_ants = 30
-    else:
-        n_ants = 40
-    
-    pheromone = np.ones((n_shelves + 1, n_shelves + 1), dtype=np.float32)
-    
-    needed_shelves = find_needed_shelves(Q, q_required)
+    # Khởi tạo ma trận pheromone
+    pheromone = np.ones((n_shelves + 1, n_shelves + 1))
     
     best_path = None
     best_distance = float('inf')
-    no_improvement_count = 0
     
-    while no_improvement_count < 10:
-        iteration_best_distance = float('inf')
-        iteration_best_path = None
-        
+    for iteration in range(n_iterations):
+        # Mỗi kiến sẽ tìm một đường đi
         for ant in range(n_ants):
-            current_pos = 0
+            current_pos = 0  # Bắt đầu từ cửa (điểm 0)
             path = []
-            collected = np.zeros(n_products, dtype=np.int32)
-            visited = {0}
+            collected = np.zeros(n_products)
+            visited = set([0])
             
+            # Tìm đường đi cho đến khi thu đủ sản phẩm
             while not is_collection_complete(collected, q_required):
                 next_pos = select_next_shelf(
                     current_pos, visited, pheromone, distances,
-                    Q, collected, q_required, alpha, beta, needed_shelves
+                    Q, collected, q_required, alpha, beta
                 )
                 
                 if next_pos is None:
@@ -104,26 +103,26 @@ def solve_aco(distances, Q, q_required, decay_rate=0.1, alpha=1, beta=2):
                     
                 path.append(next_pos)
                 visited.add(next_pos)
-                collected += np.array([Q[i][next_pos-1] for i in range(n_products)])
+                # Cập nhật số lượng sản phẩm đã thu thập
+                for i in range(n_products):
+                    collected[i] += Q[i][next_pos-1]
                 current_pos = next_pos
             
-            if path and is_collection_complete(collected, q_required):
+            # Tính tổng khoảng cách
+            if path:
                 total_distance = calculate_total_distance(path, distances)
                 
-                if total_distance < iteration_best_distance:
-                    iteration_best_distance = total_distance
-                    iteration_best_path = path.copy()
-                
-                if total_distance < best_distance:
+                # Cập nhật đường đi tốt nhất
+                if (is_collection_complete(collected, q_required) and 
+                    total_distance < best_distance):
                     best_distance = total_distance
                     best_path = path.copy()
-                    no_improvement_count = 0
+                    
+                # Cập nhật pheromone cho đường đi này
+                update_pheromone(pheromone, path, total_distance)
         
-        if iteration_best_path:
-            update_pheromone(pheromone, iteration_best_path, iteration_best_distance, decay_rate)
-        
-        if iteration_best_distance >= best_distance:
-            no_improvement_count += 1
+        # Bay hơi pheromone
+        pheromone *= (1 - decay_rate)
         
     return best_path, best_distance
 
@@ -170,6 +169,8 @@ def main():
         distances=distances,
         Q=Q,
         q_required=q_required,
+        n_ants=20,
+        n_iterations=100,
         decay_rate=0.1,
         alpha=1,
         beta=2
