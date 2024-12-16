@@ -5,7 +5,7 @@ import csv
 import time
 
 file_name = str(os.getenv('data_set'))
-file_path = f"data/{file_name}"
+file_path = "data/" + file_name
 N, M, Q, d, q = read_input_from_file(file_path)
 
 model = cp_model.CpModel()
