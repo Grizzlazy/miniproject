@@ -140,8 +140,8 @@ def main():
         n_ants=20,
         n_iterations=100,
         decay_rate=0.2,
-        alpha=1,
-        beta=2
+        alpha=1.5,
+        beta=5
     )
     end_time = time.time()
     execution_time = end_time - start_time
