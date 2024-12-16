@@ -169,10 +169,10 @@ def main():
         distances=distances,
         Q=Q,
         q_required=q_required,
-        n_ants=20,
+        n_ants=10,
         n_iterations=100,
-        decay_rate=0.1,
-        alpha=1,
+        decay_rate=0.3,
+        alpha=1.5,
         beta=2
     )
     print(len(best_path))
