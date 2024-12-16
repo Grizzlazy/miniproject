@@ -4,7 +4,7 @@ import os
 import csv
 import time
 
-file_name = str(os.getenv('dataset'))
+file_name = str(os.getenv('dataset', '1.txt'))
 file_path = "data/" + file_name
 N, M, Q, d, q = read_input_from_file(file_path)
 
@@ -70,7 +70,7 @@ model.Add(
 start_time = time.time()
 
 solver = cp_model.CpSolver()
-solver.parameters.max_time_in_seconds = 3600.0
+# solver.parameters.max_time_in_seconds = 3600.0
 status = solver.Solve(model)
 
 end_time = time.time()
