@@ -43,8 +43,6 @@ def solve_warehouse(file_name):
             solver.Sum([x[i, j] for j in range(M + 1) if j != i]) ==
             solver.Sum([x[j, i] for j in range(M + 1) if j != i])
         )
-        # Mỗi điểm chỉ được đến một lần
-        solver.Add(solver.Sum([x[j, i] for j in range(M + 1) if j != i]) == 1)
 
     # Ràng buộc MTZ cho sub-tour elimination
     big_M = M + 1
@@ -89,7 +87,7 @@ def solve_warehouse(file_name):
             while True:
                 next_point = None
                 for j in range(1, M + 1):
-                    if x[current, j].solution_value() > 0.5:  # Check for 1 with tolerance
+                    if (current, j) in x and x[current, j].solution_value() > 0.5:  # Thêm kiểm tra key tồn tại
                         next_point = j
                         break
                 if next_point is None or len(route) >= M:
@@ -123,5 +121,5 @@ def solve_warehouse(file_name):
         print(f"Execution time: {execution_time:.2f} seconds")
 
 if __name__ == "__main__":
-    file_name = str(os.getenv('dataset', '1.txt'))
+    file_name = str(os.getenv('dataset', '10.txt'))
     solve_warehouse(file_name)
