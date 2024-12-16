@@ -70,7 +70,6 @@ def solve_warehouse(file_name):
     # Giải
     start_time = time.time()
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = 300.0
     status = solver.Solve(model)
     execution_time = time.time() - start_time
 

@@ -25,7 +25,7 @@ jobs:
         run: pip install -r requirements.txt
         
       - name: Run main.py 
-        run: python ILP.py
+        run: python warehouse_ortools.py
         env:
             dataset: ${{ matrix.data_set }}
       - name: Upload result Excel file as artifact
