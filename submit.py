@@ -169,7 +169,7 @@ def main():
         distances=distances,
         Q=Q,
         q_required=q_required,
-        n_ants=10,
+        n_ants=5,
         n_iterations=100,
         decay_rate=0.3,
         alpha=1.5,
