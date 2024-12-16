@@ -69,6 +69,7 @@ def solve_warehouse(file_name):
     # Giải
     start_time = time.time()
     status = solver.Solve()
+    solver.set_time_limit(3600000)
     execution_time = time.time() - start_time
 
     # Xử lý kết quả
@@ -121,5 +122,5 @@ def solve_warehouse(file_name):
         print(f"Execution time: {execution_time:.2f} seconds")
 
 if __name__ == "__main__":
-    file_name = str(os.getenv('dataset', '10.txt'))
+    file_name = str(os.getenv('dataset', '1.txt'))
     solve_warehouse(file_name)

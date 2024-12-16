@@ -173,7 +173,7 @@ def main():
         n_iterations=50,
         decay_rate=0.2,
         alpha=1.5,
-        beta=2
+        beta=5
     )
     print(len(best_path))
     print(' '.join(map(str, best_path)))
