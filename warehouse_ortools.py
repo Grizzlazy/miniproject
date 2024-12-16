@@ -4,7 +4,7 @@ import os
 import csv
 import time
 
-file_name = str(os.getenv('data_set'))
+file_name = str(os.getenv('dataset'))
 file_path = "data/" + file_name
 N, M, Q, d, q = read_input_from_file(file_path)
 
